@@ -1,0 +1,174 @@
+-- Abstract Data Type for Semantic Protocol Buffers Schema Structure
+
+data ProtoFile = ProtoFile
+  { syntax :: Maybe SyntaxVersion
+  , package :: Maybe PackageName
+  , imports :: [ImportStatement]
+  , options :: [FileOption]
+  , definitions :: [TopLevelDefinition]
+  }
+
+data TopLevelDefinition
+  = MessageDef MessageDefinition
+  | EnumDef EnumDefinition
+  | ServiceDef ServiceDefinition
+  | ExtendDef ExtendDefinition
+
+data MessageDefinition = MessageDefinition
+  { messageName :: TypeName
+  , messageBody :: [MessageElement]
+  , messageOptions :: [MessageOption]
+  }
+
+data MessageElement
+  = FieldDef FieldDefinition
+  | OneofDef OneofDefinition
+  | MapFieldDef MapFieldDefinition
+  | NestedMessage MessageDefinition    -- nested message types
+  | NestedEnum EnumDefinition         -- nested enum types
+  | Extensions ExtensionsDeclaration
+  | Reserved ReservedStatement
+  | MessageOption OptionStatement
+
+data FieldDefinition = FieldDefinition
+  { fieldRule :: FieldRule
+  , fieldType :: FieldType
+  , fieldName :: FieldName
+  , fieldNumber :: FieldNumber
+  , fieldOptions :: [FieldOption]
+  }
+
+data OneofDefinition = OneofDefinition
+  { oneofName :: FieldName
+  , oneofFields :: [OneofField]
+  , oneofOptions :: [OptionStatement]
+  }
+
+data OneofField = OneofField
+  { oneofFieldType :: FieldType
+  , oneofFieldName :: FieldName
+  , oneofFieldNumber :: FieldNumber
+  , oneofFieldOptions :: [FieldOption]
+  }
+
+data MapFieldDefinition = MapFieldDefinition
+  { mapKeyType :: KeyType
+  , mapValueType :: FieldType
+  , mapFieldName :: FieldName
+  , mapFieldNumber :: FieldNumber
+  , mapFieldOptions :: [FieldOption]
+  }
+
+data FieldType
+  = ScalarType ScalarFieldType
+  | MessageType QualifiedName         -- references to other messages
+  | EnumType QualifiedName           -- references to enums
+
+data ScalarFieldType
+  = Double | Float | Int32 | Int64 | UInt32 | UInt64
+  | SInt32 | SInt64 | Fixed32 | Fixed64 | SFixed32 | SFixed64
+  | Bool | String | Bytes
+
+data KeyType = Int32Key | Int64Key | UInt32Key | UInt64Key 
+             | SInt32Key | SInt64Key | Fixed32Key | Fixed64Key
+             | SFixed32Key | SFixed64Key | BoolKey | StringKey
+
+data FieldRule = Optional | Required | Repeated
+
+data EnumDefinition = EnumDefinition
+  { enumName :: TypeName
+  , enumValues :: [EnumValue]
+  , enumOptions :: [EnumOption]
+  }
+
+data EnumValue = EnumValue
+  { enumValueName :: EnumValueName
+  , enumValueNumber :: Int
+  , enumValueOptions :: [EnumValueOption]
+  }
+
+data ServiceDefinition = ServiceDefinition
+  { serviceName :: ServiceName
+  , serviceMethods :: [MethodDefinition]
+  , serviceOptions :: [ServiceOption]
+  }
+
+data MethodDefinition = MethodDefinition
+  { methodName :: MethodName
+  , inputType :: StreamType
+  , outputType :: StreamType
+  , methodOptions :: [MethodOption]
+  }
+
+data StreamType = StreamType
+  { isStream :: Bool
+  , messageType :: QualifiedName
+  }
+
+data ExtendDefinition = ExtendDefinition
+  { extendedType :: QualifiedName
+  , extensionFields :: [FieldDefinition]
+  }
+
+data ExtensionsDeclaration = ExtensionsDeclaration [ExtensionRange]
+
+data ExtensionRange = ExtensionRange Int (Maybe Int)  -- start, end (Nothing = max)
+
+data ReservedStatement
+  = ReservedNumbers [ReservedRange]
+  | ReservedNames [FieldName]
+
+data ReservedRange = ReservedRange Int (Maybe Int)    -- start, end
+
+data ImportStatement = ImportStatement ImportModifier FilePath
+
+data ImportModifier = PublicImport | WeakImport | RegularImport
+
+data OptionStatement = OptionStatement OptionName OptionValue
+
+data OptionName
+  = SimpleOption Identifier
+  | ParenthesizedOption QualifiedName
+  | CustomOption QualifiedName
+
+data OptionValue
+  = ConstantValue Constant
+  | MessageValue [MessageField]
+
+data MessageField = MessageField FieldName OptionValue
+
+data Constant
+  = BoolConstant Bool
+  | StringConstant Text
+  | IntConstant Int
+  | FloatConstant Double
+  | IdentifierConstant QualifiedName
+
+data QualifiedName = QualifiedName [Identifier] -- dot-separated path
+
+-- Option types for different contexts
+data FileOption = FileOption OptionStatement
+data MessageOption = MessageOption OptionStatement  
+data FieldOption = FieldOption OptionStatement
+data EnumOption = EnumOption OptionStatement
+data EnumValueOption = EnumValueOption OptionStatement
+data ServiceOption = ServiceOption OptionStatement
+data MethodOption = MethodOption OptionStatement
+
+data SyntaxVersion = Proto2 | Proto3
+
+-- Type aliases
+type Text = String
+type Identifier = Text
+type TypeName = Text
+type FieldName = Text
+type EnumValueName = Text
+type ServiceName = Text
+type MethodName = Text
+type PackageName = Text
+type FieldNumber = Int
+type FilePath = Text
+
+-- Key insight: Protocol Buffers create semantic type hierarchies through
+-- nested message definitions and qualified name resolution, with field
+-- numbering creating wire format compatibility relationships
