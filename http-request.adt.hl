@@ -1,0 +1,260 @@
+-- HTTP Request Type (comprehensive semantic representation)
+data HTTPRequest = HTTPRequest
+  { method :: HTTPMethod
+  , uri :: URI
+  , version :: HTTPVersion
+  , headers :: [HTTPHeader]
+  , body :: HTTPBody
+  , metadata :: RequestMetadata
+  }
+
+-- HTTP Methods
+data HTTPMethod
+  = GET
+  | POST
+  | PUT
+  | DELETE
+  | PATCH
+  | HEAD
+  | OPTIONS
+  | TRACE
+  | CONNECT
+  | CustomMethod MethodName
+
+-- URI Components
+data URI = URI
+  { scheme :: Scheme
+  , authority :: Maybe Authority
+  , path :: Path
+  , query :: Maybe QueryString
+  , fragment :: Maybe Fragment
+  }
+
+data Authority = Authority
+  { userInfo :: Maybe UserInfo
+  , host :: Host
+  , port :: Maybe Port
+  }
+
+-- HTTP Headers
+data HTTPHeader
+  = ContentType MediaType
+  | ContentLength ByteLength
+  | Authorization AuthScheme Credentials
+  | Accept [MediaType]
+  | AcceptLanguage [Language]
+  | AcceptEncoding [Encoding]
+  | CacheControl [CacheDirective]
+  | Cookie [CookiePair]
+  | Host Hostname
+  | UserAgent AgentString
+  | Referer URIString
+  | Origin OriginValue
+  | XForwardedFor [IPAddress]
+  | XRealIP IPAddress
+  | XRequestID RequestID
+  | ContentEncoding Encoding
+  | TransferEncoding [TransferCoding]
+  | Connection ConnectionOption
+  | KeepAlive KeepAliveParameters
+  | Upgrade ProtocolName
+  | CustomHeader HeaderName HeaderValue
+
+-- HTTP Body Types
+data HTTPBody
+  = EmptyBody
+  | TextBody TextContent
+  | JSONBody JSONValue
+  | FormData [FormField]
+  | MultipartData [MultipartField]
+  | BinaryBody ByteString MimeType
+  | StreamBody StreamSource
+  | XMLBody XMLDocument
+
+-- Authentication
+data AuthScheme
+  = Basic
+  | Bearer
+  | Digest
+  | OAuth OAuth1Parameters
+  | OAuth2 OAuth2Parameters
+  | ApiKey ApiKeyLocation
+  | CustomAuth SchemeName
+
+-- Cache Control Directives
+data CacheDirective
+  = NoCache
+  | NoStore
+  | MaxAge Seconds
+  | MaxStale (Maybe Seconds)
+  | MinFresh Seconds
+  | NoTransform
+  | OnlyIfCached
+  | MustRevalidate
+  | ProxyRevalidate
+  | Public
+  | Private (Maybe [FieldName])
+  | CustomDirective DirectiveName (Maybe DirectiveValue)
+
+-- Form and Multipart Data
+data FormField = FormField
+  { fieldName :: FieldName
+  , fieldValue :: FieldValue
+  }
+
+data MultipartField = MultipartField
+  { partName :: PartName
+  , partHeaders :: [HTTPHeader]
+  , partContent :: PartContent
+  }
+
+data PartContent
+  = TextPart TextContent
+  | FilePart FileName FileContent MimeType
+  | BinaryPart ByteString MimeType
+
+-- Request Metadata
+data RequestMetadata = RequestMetadata
+  { timestamp :: Timestamp
+  , clientIP :: Maybe IPAddress
+  , userAgent :: Maybe AgentString
+  , requestID :: Maybe RequestID
+  , traceID :: Maybe TraceID
+  , sessionID :: Maybe SessionID
+  , correlationID :: Maybe CorrelationID
+  }
+
+-- HTTP Version
+data HTTPVersion
+  = HTTP_0_9
+  | HTTP_1_0
+  | HTTP_1_1
+  | HTTP_2_0
+  | HTTP_3_0
+  | CustomVersion VersionString
+
+-- Media Types
+data MediaType = MediaType
+  { mainType :: MainType
+  , subType :: SubType
+  , parameters :: [MediaParameter]
+  }
+
+data MainType
+  = Application
+  | Audio
+  | Font
+  | Example
+  | Image
+  | Message
+  | Model
+  | Multipart
+  | Text
+  | Video
+  | CustomMainType TypeName
+
+-- Connection Options
+data ConnectionOption
+  = CloseConnection
+  | KeepAliveConnection
+  | UpgradeConnection
+  | CustomConnection ConnectionValue
+
+-- Keep-Alive Parameters
+data KeepAliveParameters = KeepAliveParameters
+  { timeout :: Maybe Seconds
+  , maxRequests :: Maybe RequestCount
+  }
+
+-- OAuth Parameters
+data OAuth1Parameters = OAuth1Parameters
+  { consumerKey :: ConsumerKey
+  , token :: Maybe AccessToken
+  , signature :: Signature
+  , timestamp :: OAuthTimestamp
+  , nonce :: Nonce
+  , version :: OAuthVersion
+  }
+
+data OAuth2Parameters = OAuth2Parameters
+  { accessToken :: AccessToken
+  , tokenType :: TokenType
+  , scope :: Maybe Scope
+  }
+
+-- API Key Location
+data ApiKeyLocation
+  = HeaderKey HeaderName
+  | QueryKey QueryParam
+  | CookieKey CookieName
+
+-- Transfer Coding
+data TransferCoding
+  = Chunked
+  | Compress
+  | Deflate
+  | GZip
+  | CustomCoding CodingName
+
+-- Type aliases for HTTP request data
+type MethodName = String
+type Scheme = String
+type UserInfo = String
+type Host = String
+type Port = Int
+type Path = String
+type QueryString = String
+type Fragment = String
+type Hostname = String
+type AgentString = String
+type URIString = String
+type OriginValue = String
+type IPAddress = String
+type RequestID = String
+type TraceID = String
+type SessionID = String
+type CorrelationID = String
+type HeaderName = String
+type HeaderValue = String
+type TextContent = String
+type JSONValue = String  -- Could be more specific with a JSON AST
+type XMLDocument = String  -- Could be more specific with an XML AST
+type ByteString = String
+type MimeType = String
+type StreamSource = String  -- Abstract stream reference
+type Credentials = String
+type Language = String
+type Encoding = String
+type CookiePair = (CookieName, CookieValue)
+type CookieName = String
+type CookieValue = String
+type KeepAliveParameters = String
+type ProtocolName = String
+type Seconds = Int
+type FieldName = String
+type DirectiveName = String
+type DirectiveValue = String
+type FieldValue = String
+type PartName = String
+type FileName = String
+type FileContent = ByteString
+type Timestamp = String  -- Could use a proper time type
+type VersionString = String
+type SubType = String
+type MediaParameter = (ParameterName, ParameterValue)
+type ParameterName = String
+type ParameterValue = String
+type TypeName = String
+type ConnectionValue = String
+type RequestCount = Int
+type ConsumerKey = String
+type AccessToken = String
+type Signature = String
+type OAuthTimestamp = String
+type Nonce = String
+type OAuthVersion = String
+type TokenType = String
+type Scope = String
+type QueryParam = String
+type CodingName = String
+type SchemeName = String
