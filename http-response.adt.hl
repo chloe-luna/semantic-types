@@ -1,0 +1,354 @@
+-- HTTP Response Type (comprehensive semantic representation)
+data HTTPResponse = HTTPResponse
+  { version :: HTTPVersion
+  , status :: HTTPStatus
+  , headers :: [HTTPResponseHeader]
+  , body :: HTTPResponseBody
+  , metadata :: ResponseMetadata
+  }
+
+-- HTTP Status Codes (semantic representation)
+data HTTPStatus = HTTPStatus
+  { statusCode :: StatusCode
+  , reasonPhrase :: ReasonPhrase
+  , statusClass :: StatusClass
+  }
+
+data StatusClass
+  = Informational    -- 1xx
+  | Success          -- 2xx
+  | Redirection      -- 3xx
+  | ClientError      -- 4xx
+  | ServerError      -- 5xx
+
+data StatusCode
+  -- 1xx Informational
+  = Continue_100
+  | SwitchingProtocols_101
+  | Processing_102
+  | EarlyHints_103
+  -- 2xx Success
+  | OK_200
+  | Created_201
+  | Accepted_202
+  | NonAuthoritativeInformation_203
+  | NoContent_204
+  | ResetContent_205
+  | PartialContent_206
+  | MultiStatus_207
+  | AlreadyReported_208
+  | IMUsed_226
+  -- 3xx Redirection
+  | MultipleChoices_300
+  | MovedPermanently_301
+  | Found_302
+  | SeeOther_303
+  | NotModified_304
+  | UseProxy_305
+  | TemporaryRedirect_307
+  | PermanentRedirect_308
+  -- 4xx Client Error
+  | BadRequest_400
+  | Unauthorized_401
+  | PaymentRequired_402
+  | Forbidden_403
+  | NotFound_404
+  | MethodNotAllowed_405
+  | NotAcceptable_406
+  | ProxyAuthenticationRequired_407
+  | RequestTimeout_408
+  | Conflict_409
+  | Gone_410
+  | LengthRequired_411
+  | PreconditionFailed_412
+  | PayloadTooLarge_413
+  | URITooLong_414
+  | UnsupportedMediaType_415
+  | RangeNotSatisfiable_416
+  | ExpectationFailed_417
+  | ImATeapot_418
+  | MisdirectedRequest_421
+  | UnprocessableEntity_422
+  | Locked_423
+  | FailedDependency_424
+  | TooEarly_425
+  | UpgradeRequired_426
+  | PreconditionRequired_428
+  | TooManyRequests_429
+  | RequestHeaderFieldsTooLarge_431
+  | UnavailableForLegalReasons_451
+  -- 5xx Server Error
+  | InternalServerError_500
+  | NotImplemented_501
+  | BadGateway_502
+  | ServiceUnavailable_503
+  | GatewayTimeout_504
+  | HTTPVersionNotSupported_505
+  | VariantAlsoNegotiates_506
+  | InsufficientStorage_507
+  | LoopDetected_508
+  | NotExtended_510
+  | NetworkAuthenticationRequired_511
+  | CustomStatus Int
+
+-- HTTP Response Headers
+data HTTPResponseHeader
+  = ContentType MediaType
+  | ContentLength ByteLength
+  | ContentEncoding Encoding
+  | ContentLanguage [Language]
+  | ContentLocation URIString
+  | ContentRange ContentRangeSpec
+  | ContentDisposition DispositionType DispositionParameters
+  | CacheControl [CacheDirective]
+  | Expires ExpiryDate
+  | LastModified LastModifiedDate
+  | ETag EntityTag
+  | Location URIString
+  | Server ServerString
+  | Date HTTPDate
+  | Age AgeValue
+  | Vary [HeaderName]
+  | SetCookie SetCookieDirective
+  | AccessControlAllowOrigin AllowOriginValue
+  | AccessControlAllowMethods [HTTPMethod]
+  | AccessControlAllowHeaders [HeaderName]
+  | AccessControlAllowCredentials Bool
+  | AccessControlExposeHeaders [HeaderName]
+  | AccessControlMaxAge MaxAgeValue
+  | StrictTransportSecurity STSDirective
+  | ContentSecurityPolicy CSPDirective
+  | XFrameOptions FrameOption
+  | XContentTypeOptions ContentTypeOption
+  | XSSProtection XSSOption
+  | Connection ConnectionOption
+  | TransferEncoding [TransferCoding]
+  | WWWAuthenticate AuthChallenge
+  | ProxyAuthenticate AuthChallenge
+  | Retry-After RetryAfterValue
+  | Warning WarningValue
+  | Pragma PragmaDirective
+  | Trailer [HeaderName]
+  | Via [ViaValue]
+  | CustomResponseHeader HeaderName HeaderValue
+
+-- Response Body Types
+data HTTPResponseBody
+  = EmptyResponseBody
+  | TextResponseBody TextContent
+  | JSONResponseBody JSONValue
+  | XMLResponseBody XMLDocument
+  | HTMLResponseBody HTMLDocument
+  | BinaryResponseBody ByteString MimeType
+  | StreamResponseBody StreamSource
+  | ErrorResponseBody ErrorContent
+  | RedirectResponseBody RedirectLocation
+  | FileResponseBody FilePath MimeType FileSize
+
+-- Content Range Specification
+data ContentRangeSpec
+  = ByteRange ByteRangeSpec TotalSize
+  | CustomRange RangeUnit RangeSpec TotalSize
+
+data ByteRangeSpec
+  = ByteRangeComplete StartByte EndByte
+  | ByteRangeFromStart StartByte
+  | ByteRangeFromEnd EndByte
+  | UnsatisfiableRange
+
+-- Content Disposition
+data DispositionType
+  = Inline
+  | Attachment
+  | FormData
+  | CustomDisposition DispositionName
+
+-- Entity Tag
+data EntityTag = EntityTag
+  { isWeak :: Bool
+  , tagValue :: TagValue
+  }
+
+-- Cookie Setting
+data SetCookieDirective = SetCookieDirective
+  { cookieName :: CookieName
+  , cookieValue :: CookieValue
+  , cookieExpires :: Maybe ExpiryDate
+  , cookieMaxAge :: Maybe MaxAgeValue
+  , cookieDomain :: Maybe Domain
+  , cookiePath :: Maybe Path
+  , cookieSecure :: Bool
+  , cookieHttpOnly :: Bool
+  , cookieSameSite :: Maybe SameSiteValue
+  }
+
+data SameSiteValue
+  = Strict
+  | Lax
+  | None
+
+-- CORS Headers
+data AllowOriginValue
+  = AllowAnyOrigin
+  | AllowSpecificOrigin URIString
+  | AllowNullOrigin
+
+-- Security Headers
+data STSDirective = STSDirective
+  { maxAge :: MaxAgeValue
+  , includeSubDomains :: Bool
+  , preload :: Bool
+  }
+
+data FrameOption
+  = Deny
+  | SameOrigin
+  | AllowFrom URIString
+
+data ContentTypeOption = NoSniff
+
+data XSSOption = XSSOption
+  { enabled :: Bool
+  , mode :: Maybe XSSMode
+  , reportURI :: Maybe URIString
+  }
+
+data XSSMode = Block
+
+-- Authentication Challenges
+data AuthChallenge
+  = BasicChallenge Realm
+  | BearerChallenge BearerParameters
+  | DigestChallenge DigestParameters
+  | CustomChallenge SchemeName ChallengeParameters
+
+data BearerParameters = BearerParameters
+  { realm :: Maybe Realm
+  , scope :: Maybe Scope
+  , error :: Maybe ErrorCode
+  , errorDescription :: Maybe ErrorDescription
+  }
+
+data DigestParameters = DigestParameters
+  { realm :: Realm
+  , domain :: Maybe [URIString]
+  , nonce :: Nonce
+  , opaque :: Maybe OpaqueValue
+  , stale :: Maybe Bool
+  , algorithm :: Maybe DigestAlgorithm
+  , qop :: Maybe [QopValue]
+  }
+
+data DigestAlgorithm
+  = MD5
+  | MD5Sess
+  | SHA256
+  | SHA256Sess
+  | CustomDigestAlgorithm AlgorithmName
+
+data QopValue
+  = Auth
+  | AuthInt
+  | CustomQop QopName
+
+-- Retry After
+data RetryAfterValue
+  = RetryAfterSeconds Seconds
+  | RetryAfterDate HTTPDate
+
+-- Warning Values
+data WarningValue = WarningValue
+  { warningCode :: WarningCode
+  , warningAgent :: WarningAgent
+  , warningText :: WarningText
+  , warningDate :: Maybe HTTPDate
+  }
+
+-- Via Header Values
+data ViaValue = ViaValue
+  { protocolName :: Maybe ProtocolName
+  , protocolVersion :: ProtocolVersion
+  , receivedBy :: ReceivedBy
+  , comment :: Maybe Comment
+  }
+
+-- Response Metadata
+data ResponseMetadata = ResponseMetadata
+  { processingTime :: Maybe Duration
+  , serverTimestamp :: Timestamp
+  , responseSize :: Maybe ByteLength
+  , compressionRatio :: Maybe CompressionRatio
+  , cacheStatus :: Maybe CacheStatus
+  , originServer :: Maybe ServerIdentifier
+  , requestID :: Maybe RequestID
+  , traceID :: Maybe TraceID
+  , errorDetails :: Maybe ErrorDetails
+  }
+
+data CacheStatus
+  = Hit
+  | Miss
+  | Stale
+  | Revalidated
+  | Bypassed
+
+data ErrorDetails = ErrorDetails
+  { errorCode :: Maybe ErrorCode
+  , errorMessage :: Maybe ErrorMessage
+  , errorCategory :: Maybe ErrorCategory
+  , stackTrace :: Maybe StackTrace
+  }
+
+data ErrorCategory
+  = ValidationError
+  | AuthenticationError
+  | AuthorizationError
+  | ResourceError
+  | NetworkError
+  | SystemError
+  | CustomError ErrorType
+
+-- Type aliases for response data
+type ReasonPhrase = String
+type ByteLength = Int
+type ExpiryDate = String  -- Could use proper date type
+type LastModifiedDate = String
+type HTTPDate = String
+type AgeValue = Int
+type MaxAgeValue = Int
+type ServerString = String
+type TagValue = String
+type Domain = String
+type HTMLDocument = String
+type ErrorContent = String
+type RedirectLocation = URIString
+type FilePath = String
+type FileSize = Int
+type StartByte = Int
+type EndByte = Int
+type TotalSize = String  -- Can be "*" for unknown
+type RangeUnit = String
+type RangeSpec = String
+type DispositionName = String
+type DispositionParameters = [(ParameterName, ParameterValue)]
+type Realm = String
+type ErrorCode = String
+type ErrorDescription = String
+type OpaqueValue = String
+type QopName = String
+type AlgorithmName = String
+type ChallengeParameters = [(ParameterName, ParameterValue)]
+type WarningCode = Int
+type WarningAgent = String
+type WarningText = String
+type ProtocolVersion = String
+type ReceivedBy = String
+type Comment = String
+type Duration = Int  -- milliseconds
+type CompressionRatio = Double
+type ServerIdentifier = String
+type ErrorMessage = String
+type ErrorType = String
+type StackTrace = String
+type CSPDirective = String  -- Could be more structured
+type PragmaDirective = String
