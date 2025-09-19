@@ -1,0 +1,91 @@
+-- Abstract Data Type for Semantic Markdown Document Structure
+
+data Document = Document 
+  { blocks :: [Block]
+  , references :: [Reference]      -- link/image reference definitions
+  , footnotes :: [FootnoteDef]     -- footnote definitions
+  , metadata :: Maybe Frontmatter  -- YAML/TOML headers
+  }
+
+data Block 
+  = Heading HeadingSyntax [Inline] [Block]  -- syntax, content, nested blocks
+  | Paragraph [Inline]
+  | List ListType [ListItem]
+  | CodeBlock CodeBlockType
+  | BlockQuote [Block]
+  | HorizontalRule
+  | Table TableHeader [TableRow]
+  | HtmlBlock Text
+  | Comment Text
+  | MathBlock Text  -- $ block math $
+  | Admonition AdmonitionType Text [Block]  -- !!! warning "title"
+  deriving (Show, Eq)
+
+data Inline
+  = Text Text
+  | Emphasis EmphasisType [Inline]
+  | Code Text
+  | Link [Inline] Target (Maybe Title)  -- content, target, title
+  | Image [Inline] Target (Maybe Title)
+  | LineBreak                           -- hard break (two spaces)
+  | SoftBreak                          -- soft break (single newline)
+  | FootnoteRef Text                   -- [^ref]
+  | Math Text                          -- $inline math$
+  | RawHtml Text                       -- <span>raw</span>
+  | Autolink Url                       -- <http://example.com>
+  | Emoji Text                         -- :smile:
+  | Mention Text                       -- @username
+  | IssueRef Text                      -- #123
+  | WikiLink Text (Maybe Text)         -- [[link]] or [[link|display]]
+  | Subscript [Inline]                 -- H~2~O
+  | Superscript [Inline]               -- x^2^
+  | Highlight [Inline]                 -- ==highlighted==
+  | Abbreviation Text                  -- *[abbrev]
+
+data ListItem = ListItem [Inline] [Block] (Maybe TaskStatus)  -- content, nested blocks, task checkbox
+
+data ListType 
+  = Ordered Int  -- starting number
+  | Unordered BulletType
+
+data BulletType = Dash | Asterisk | Plus
+
+data EmphasisType = Strong | Italic | Strikethrough | Underline
+
+data TableHeader = TableHeader [TableCell]
+
+data TableRow = TableRow [TableCell]  
+
+data TableCell = TableCell Alignment [Inline]
+
+data Alignment = LeftAlign | CenterAlign | RightAlign | DefaultAlign
+
+-- New supporting types
+data HeadingSyntax = HeadingOne | HeadingTwo | HeadingThree | HeadingFour | HeadingFive | HeadingSix
+
+data CodeBlockType 
+  = FencedCode (Maybe Language) Text   -- ```lang or ~~~lang
+  | IndentedCode Text                  -- 4+ space indented
+
+data Target
+  = DirectUrl Url
+  | ReferenceLink Text  -- [ref]
+
+data Reference 
+  = LinkReference Text Url (Maybe Title)     -- [ref]: url "title"
+  | ImageReference Text Url (Maybe Title)    -- [ref]: url "title"
+
+data FootnoteDef = FootnoteDef Text [Block]   -- [^ref]: content
+
+data Frontmatter = Frontmatter FrontmatterType Text
+
+data FrontmatterType = YAML | TOML | JSON
+
+data TaskStatus = Completed | Incomplete
+
+data AdmonitionType = Note | Warning | Danger | Info | Tip
+
+type Language = Text    -- code block language
+type Url = Text        -- link/image URL  
+type Title = Text      -- link/image title
+type Text = String     -- text content
