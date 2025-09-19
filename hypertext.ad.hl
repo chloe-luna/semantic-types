@@ -1,0 +1,108 @@
+-- Abstract Data Type for Semantic Hypertext Document Structure
+
+data Document = Document 
+  { head :: Maybe Head
+  , body :: [Block]
+  , doctype :: Maybe Doctype
+  }
+
+data Head = Head
+  { title :: Maybe Text
+  , meta :: [MetaElement]
+  , links :: [LinkElement]
+  , scripts :: [ScriptElement]
+  , styles :: [StyleElement]
+  }
+
+data Block
+  = Heading HeadingLevel [Inline] [Block]  -- semantic hierarchy like markdown
+  | Section [Attribute] [Block]            -- semantic sectioning
+  | Article [Attribute] [Block]            -- complete content unit
+  | Aside [Attribute] [Block]              -- tangential content
+  | Nav [Attribute] [Block]                -- navigation section
+  | Main [Attribute] [Block]               -- primary content
+  | Header [Attribute] [Block]             -- introductory content
+  | Footer [Attribute] [Block]             -- closing content
+  | Paragraph [Attribute] [Inline]
+  | List ListType [Attribute] [ListItem]
+  | Table [Attribute] TableHead (Maybe TableBody) (Maybe TableFoot)
+  | Figure [Attribute] [Block] (Maybe FigCaption)
+  | Blockquote [Attribute] [Block] (Maybe Cite)
+  | Pre [Attribute] [Inline]
+  | Address [Attribute] [Inline]
+  | Details [Attribute] Summary [Block]
+  | Div [Attribute] [Block]                -- generic container
+  | Form [Attribute] [FormElement]
+
+data Inline
+  = Text Text
+  | Emphasis EmphasisType [Attribute] [Inline]
+  | Link [Attribute] Url (Maybe Text) [Inline]  -- attrs, href, title, content
+  | Image [Attribute] Url Text (Maybe Text)     -- attrs, src, alt, title
+  | Code [Attribute] Text
+  | Span [Attribute] [Inline]
+  | Button [Attribute] [Inline]
+  | Input InputType [Attribute]
+  | Label [Attribute] [Inline]
+  | Small [Attribute] [Inline]             -- fine print
+  | Mark [Attribute] [Inline]              -- highlighted text
+  | Del [Attribute] [Inline]               -- deleted text
+  | Ins [Attribute] [Inline]               -- inserted text
+  | Sub [Attribute] [Inline]               -- subscript
+  | Sup [Attribute] [Inline]               -- superscript
+  | Time [Attribute] (Maybe DateTime) [Inline]
+  | Data [Attribute] Text [Inline]         -- machine-readable data
+  | Abbr [Attribute] (Maybe Text) [Inline] -- abbreviation with title
+  | Kbd [Attribute] [Inline]               -- keyboard input
+  | Samp [Attribute] [Inline]              -- sample output
+  | Var [Attribute] [Inline]               -- variable
+  | LineBreak
+
+data ListItem = ListItem [Attribute] [Block]
+
+data ListType = OrderedList | UnorderedList | DescriptionList
+
+data FormElement
+  = FieldSet [Attribute] (Maybe Legend) [FormElement]
+  | FormInput InputType [Attribute]
+  | TextArea [Attribute] Text
+  | Select [Attribute] [Option]
+  | FormButton [Attribute] [Inline]
+  | FormLabel [Attribute] [Inline]
+
+data HeadingLevel = HeadingOne | HeadingTwo | HeadingThree 
+                  | HeadingFour | HeadingFive | HeadingSix
+
+data EmphasisType = Strong | Em | B | I | U | S
+
+data InputType = TextInput | EmailInput | PasswordInput | NumberInput 
+               | DateInput | CheckboxInput | RadioInput | FileInput
+               | SubmitInput | ResetInput | ButtonInput | HiddenInput
+
+data TableHead = TableHead [TableRow]
+data TableBody = TableBody [TableRow]  
+data TableFoot = TableFoot [TableRow]
+data TableRow = TableRow [Attribute] [TableCell]
+data TableCell = TableCell CellType [Attribute] [Block]
+data CellType = DataCell | HeaderCell
+
+data FigCaption = FigCaption [Attribute] [Inline]
+data Summary = Summary [Attribute] [Inline]
+data Legend = Legend [Attribute] [Inline]
+data Option = Option [Attribute] Text Bool  -- attrs, value, selected
+
+data MetaElement = MetaElement [Attribute]
+data LinkElement = LinkElement [Attribute]  
+data ScriptElement = ScriptElement [Attribute] (Maybe Text)
+data StyleElement = StyleElement [Attribute] Text
+
+data Attribute = Attribute AttrName AttrValue
+data AttrName = Class | Id | Style | Title | Lang | Dir | DataAttr Text | CustomAttr Text
+data AttrValue = AttrValue Text
+
+-- Type aliases  
+type Text = String
+type Url = Text
+type Cite = Text
+type DateTime = Text
+type Doctype = Text
