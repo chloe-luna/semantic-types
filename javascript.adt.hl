@@ -1,0 +1,146 @@
+-- Abstract Data Type for Semantic JavaScript Program Structure
+
+data Program = Program [ModuleItem]
+
+data ModuleItem
+  = Statement Stmt
+  | Declaration Decl
+  | ImportDecl ImportSpec
+  | ExportDecl ExportSpec
+
+data Stmt
+  = Block [BlockItem]                    -- { ... } - creates lexical scope
+  | ExprStmt Expr
+  | If Expr BlockScope (Maybe BlockScope) -- condition, then, else
+  | While Expr BlockScope                -- condition, body  
+  | For ForInit (Maybe Expr) (Maybe Expr) BlockScope -- init, condition, update, body
+  | ForIn Binding Expr BlockScope        -- binding, iterable, body
+  | ForOf Binding Expr BlockScope        -- binding, iterable, body
+  | DoWhile BlockScope Expr              -- body, condition
+  | Switch Expr [CaseClause] (Maybe DefaultClause)
+  | Try BlockScope [CatchClause] (Maybe FinallyClause)
+  | With Expr BlockScope                 -- with object, body
+  | Labeled Label Stmt                   -- label, statement
+  | Break (Maybe Label)
+  | Continue (Maybe Label)
+  | Return (Maybe Expr)
+  | Throw Expr
+  | Debugger
+
+data Decl
+  = VarDecl [VarDeclarator]             -- var declarations
+  | LetDecl [VarDeclarator]             -- let declarations  
+  | ConstDecl [VarDeclarator]           -- const declarations
+  | FunctionDecl Identifier [Parameter] BlockScope -- name, params, body
+  | ClassDecl Identifier (Maybe Expr) ClassBody    -- name, superclass, body
+
+data Expr
+  = Identifier Text
+  | Literal LiteralValue
+  | ArrayExpr [Maybe Expr]              -- sparse arrays allowed
+  | ObjectExpr [Property]
+  | FunctionExpr (Maybe Identifier) [Parameter] BlockScope -- name, params, body
+  | ArrowFunction [Parameter] ArrowBody -- params, body
+  | ClassExpr (Maybe Identifier) (Maybe Expr) ClassBody -- name, superclass, body
+  | ThisExpr
+  | Super
+  | MetaProperty MetaProp               -- new.target, import.meta
+  | MemberExpr Expr PropertyKey Bool    -- object, property, computed
+  | CallExpr Expr [Expr]                -- callee, arguments
+  | NewExpr Expr [Expr]                 -- constructor, arguments
+  | UpdateExpr UpdateOp Expr Bool       -- operator, operand, prefix
+  | UnaryExpr UnaryOp Expr              -- operator, operand
+  | BinaryExpr BinaryOp Expr Expr       -- operator, left, right
+  | AssignmentExpr AssignOp Expr Expr   -- operator, left, right
+  | LogicalExpr LogicalOp Expr Expr     -- operator, left, right
+  | ConditionalExpr Expr Expr Expr      -- test, consequent, alternate
+  | SequenceExpr [Expr]                 -- comma operator
+  | AwaitExpr Expr                      -- await expression
+  | YieldExpr (Maybe Expr) Bool         -- value, delegate
+  | TemplateLiteral [TemplateElement] [Expr] -- quasis, expressions
+  | TaggedTemplate Expr TemplateLiteral -- tag, template
+  | ParenExpr Expr                      -- parenthesized expression
+
+data BlockScope = BlockScope [BlockItem] -- creates new lexical scope
+
+data BlockItem = BlockStmt Stmt | BlockDecl Decl
+
+data ArrowBody = ArrowExpr Expr | ArrowBlock BlockScope
+
+data CaseClause = CaseClause Expr [Stmt]
+data DefaultClause = DefaultClause [Stmt]
+data CatchClause = CatchClause (Maybe Binding) BlockScope
+data FinallyClause = FinallyClause BlockScope
+
+data ClassBody = ClassBody [ClassMember]
+
+data ClassMember
+  = MethodDef MethodKind PropertyKey FunctionBody Bool Bool -- kind, key, body, static, computed
+  | PropertyDef PropertyKey (Maybe Expr) Bool Bool         -- key, value, static, computed
+  | StaticBlock BlockScope                                  -- static initialization block
+
+data Property
+  = PropertyDef PropertyKey Expr                           -- key: value
+  | MethodDef MethodKind PropertyKey FunctionBody          -- method definition
+  | SpreadProperty Expr                                    -- ...expr
+
+data VarDeclarator = VarDeclarator Binding (Maybe Expr)   -- pattern, init
+
+data Binding
+  = IdentifierBinding Identifier
+  | ArrayBinding [Maybe Binding] (Maybe Binding)          -- elements, rest
+  | ObjectBinding [ObjectBindingProperty] (Maybe Binding) -- properties, rest
+
+data ObjectBindingProperty
+  = BindingProperty PropertyKey Binding                    -- key, binding
+  | BindingIdentifier Identifier (Maybe Expr)            -- identifier, default
+
+data Parameter = Parameter Binding (Maybe Expr)           -- pattern, default
+
+data ImportSpec
+  = ImportDefault Identifier Text                         -- local, source
+  | ImportNamespace Identifier Text                       -- local, source  
+  | ImportNamed [ImportBinding] Text                      -- bindings, source
+  | ImportSideEffect Text                                 -- source only
+
+data ExportSpec
+  = ExportDefault Expr
+  | ExportDeclaration Decl
+  | ExportNamed [ExportBinding] (Maybe Text)             -- bindings, source
+  | ExportAll (Maybe Identifier) Text                    -- alias, source
+
+data ImportBinding = ImportBinding Identifier (Maybe Identifier) -- imported, local
+data ExportBinding = ExportBinding Identifier (Maybe Identifier) -- local, exported
+
+data PropertyKey = PropIdentifier Identifier | PropLiteral LiteralValue | PropComputed Expr
+
+data LiteralValue
+  = StringLit Text
+  | NumberLit Double  
+  | BigIntLit Text
+  | BoolLit Bool
+  | NullLit
+  | RegExpLit Text Text -- pattern, flags
+
+data TemplateElement = TemplateElement Text Text Bool -- cooked, raw, tail
+
+data MethodKind = Method | Constructor | Get | Set
+
+data FunctionBody = FunctionBody [Stmt]
+
+data UpdateOp = Increment | Decrement
+data UnaryOp = Plus | Minus | Not | BitwiseNot | Typeof | Void | Delete
+data BinaryOp = Add | Sub | Mul | Div | Mod | Exp | LShift | RShift | URShift 
+              | Lt | Gt | Le | Ge | Eq | Ne | StrictEq | StrictNe
+              | BitwiseAnd | BitwiseOr | BitwiseXor | In | Instanceof
+data AssignOp = Assign | AddAssign | SubAssign | MulAssign | DivAssign | ModAssign
+              | ExpAssign | LShiftAssign | RShiftAssign | URShiftAssign
+              | BitwiseAndAssign | BitwiseOrAssign | BitwiseXorAssign
+data LogicalOp = And | Or | Nullish
+
+data MetaProp = NewTarget | ImportMeta
+
+-- Type aliases
+type Text = String
+type Identifier = Text
+type Label = Text
