@@ -1,0 +1,45 @@
+-- DNS Record Type (pure data storage)
+data DNSRecord
+  = AddressRecord IPv4Address
+  | IPv6Record IPv6Address  
+  | CanonicalName DomainName
+  | MailExchange Priority DomainName
+  | NameServer DomainName
+  | TextRecord [TextString]
+  | ServiceRecord Priority Weight Port DomainName
+  | StartOfAuthority DomainName DomainName Serial TimeInterval TimeInterval TimeInterval TimeInterval
+  | PointerRecord DomainName
+  | CertificateRecord CertificateType KeyTag Algorithm CertificateData
+  | LocationRecord Latitude Longitude Altitude Precision
+  | NamingAuthority Order Preference Flags Services Regexp Replacement
+  | CustomRecord RecordType ByteString
+
+-- Type aliases for record data
+type DomainName = String
+type IPv4Address = String
+type IPv6Address = String
+type TextString = String
+type RecordType = String
+type ByteString = String
+type TimeInterval = Int
+type Priority = Int
+type Weight = Int
+type Port = Int
+type Serial = Int
+type KeyTag = Int
+type Algorithm = Int
+type CertificateType = Int
+type CertificateData = String
+type Latitude = Double
+type Longitude = Double  
+type Altitude = Double
+type Precision = Double
+type Order = Int
+type Preference = Int
+type Flags = String
+type Services = String
+type Regexp = String
+type Replacement = String
+type Subject = String
+type Predicate = String  
+type Object = String
